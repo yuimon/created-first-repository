@@ -1,0 +1,410 @@
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Unimarket (MVP)</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <span class="logo">🎓</span>
+      <h1>Unimarket</h1>
+    </div>
+    <nav class="top-actions">
+      <button id="btn-open-login" class="btn">ログイン/新規登録</button>
+      <button id="btn-open-profile" class="btn btn-ghost">プロフィール</button>
+      <button id="btn-open-new" class="btn btn-primary">+ 出品</button>
+    </nav>
+  </header>
+
+  <main class="layout">
+    <aside class="sidebar">
+      <section class="card">
+        <h2>検索・フィルタ</h2>
+        <div class="field">
+          <label>キーワード</label>
+          <input type="text" id="q-keyword" placeholder="タイトル・説明・教授名など" />
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label>カテゴリ</label>
+            <select id="q-category">
+              <option value="">すべて</option>
+              <option value="textbook">教科書</option>
+              <option value="daily">日用品</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>状態</label>
+            <select id="q-condition">
+              <option value="">指定なし</option>
+              <option value="new">新品に近い</option>
+              <option value="good">良い</option>
+              <option value="fair">可</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label>最低価格</label>
+            <input type="number" id="q-min" placeholder="0" min="0" />
+          </div>
+          <div class="field">
+            <label>最高価格</label>
+            <input type="number" id="q-max" placeholder="99999" min="0" />
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label>大学</label>
+            <input type="text" id="q-univ" placeholder="例: 横浜国立大学" />
+          </div>
+          <div class="field">
+            <label>並び替え</label>
+            <select id="q-sort">
+              <option value="newest">新着順</option>
+              <option value="price-asc">価格↑</option>
+              <option value="price-desc">価格↓</option>
+              <option value="popular">人気順（閲覧多）</option>
+            </select>
+          </div>
+        </div>
+        <div class="actions">
+          <button id="btn-search" class="btn btn-primary">検索</button>
+          <button id="btn-clear" class="btn btn-ghost">条件クリア</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>クイックリンク</h2>
+        <div class="quick-links">
+          <button class="chip" data-tab="market">マーケット</button>
+          <button class="chip" data-tab="favorites">お気に入り</button>
+          <button class="chip" data-tab="watchlist">ウォッチ</button>
+          <button class="chip" data-tab="history">履歴</button>
+          <button class="chip" data-tab="mine">自分の出品</button>
+          <button class="chip" data-tab="messages">メッセージ</button>
+          <button class="chip" data-tab="orders">取引</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>通知</h2>
+        <ul id="notification-list" class="notif-list"></ul>
+      </section>
+    </aside>
+
+    <section class="content">
+      <div class="tabs">
+        <button class="tab active" data-tab="market">マーケット</button>
+        <button class="tab" data-tab="favorites">お気に入り</button>
+        <button class="tab" data-tab="watchlist">ウォッチ</button>
+        <button class="tab" data-tab="history">履歴</button>
+        <button class="tab" data-tab="mine">自分の出品</button>
+        <button class="tab" data-tab="messages">メッセージ</button>
+        <button class="tab" data-tab="orders">取引</button>
+      </div>
+
+      <div id="panel-market" class="panel active">
+        <div id="market-grid" class="grid"></div>
+      </div>
+
+      <div id="panel-favorites" class="panel">
+        <div id="favorites-grid" class="grid"></div>
+      </div>
+
+      <div id="panel-watchlist" class="panel">
+        <div id="watchlist-grid" class="grid"></div>
+      </div>
+
+      <div id="panel-history" class="panel">
+        <div class="panel-actions">
+          <button id="btn-clear-history" class="btn btn-ghost">履歴をクリア</button>
+        </div>
+        <div id="history-grid" class="grid"></div>
+      </div>
+
+      <div id="panel-mine" class="panel">
+        <div id="mine-grid" class="grid"></div>
+      </div>
+
+      <div id="panel-messages" class="panel">
+        <div class="messages">
+          <aside class="thread-list" id="thread-list"></aside>
+          <section class="thread-view">
+            <div id="thread-header" class="thread-header">スレッドを選択してください</div>
+            <div id="thread-messages" class="thread-messages"></div>
+            <div class="thread-input">
+              <input id="msg-input" type="text" placeholder="メッセージを入力" />
+              <button id="btn-send-msg" class="btn btn-primary">送信</button>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <div id="panel-orders" class="panel">
+        <div id="orders-list" class="orders"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ログイン/登録モーダル -->
+  <dialog id="dlg-auth" class="modal">
+    <form method="dialog" class="modal-card" id="auth-form">
+      <header>
+        <h3>ログイン / 新規登録</h3>
+      </header>
+      <div class="body">
+        <div class="field">
+          <label>大学メールアドレス</label>
+          <input type="email" id="auth-email" placeholder="xxx@univ.ac.jp" required />
+          <small class="hint">*.ac.jp などの学生メールを推奨（デモでは任意）</small>
+        </div>
+        <div class="field">
+          <label>パスワード</label>
+          <input type="password" id="auth-pass" placeholder="8文字以上" required />
+        </div>
+        <div class="field">
+          <label>
+            <input type="checkbox" id="auth-2fa" /> 二段階認証を有効化（デモ）
+          </label>
+        </div>
+      </div>
+      <footer>
+        <button class="btn btn-ghost" value="cancel">キャンセル</button>
+        <button id="btn-auth-login" class="btn" value="login">ログイン</button>
+        <button id="btn-auth-register" class="btn btn-primary" value="register">新規登録</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- プロフィールモーダル -->
+  <dialog id="dlg-profile" class="modal">
+    <form method="dialog" class="modal-card" id="profile-form">
+      <header>
+        <h3>プロフィール</h3>
+      </header>
+      <div class="body grid-2">
+        <div class="field">
+          <label>大学名</label>
+          <input id="pf-university" type="text" placeholder="例: 横浜国立大学" />
+        </div>
+        <div class="field">
+          <label>学部</label>
+          <input id="pf-faculty" type="text" placeholder="例: 経済学部" />
+        </div>
+        <div class="field">
+          <label>学科</label>
+          <input id="pf-department" type="text" placeholder="例: 経済学科" />
+        </div>
+        <div class="field">
+          <label>学年</label>
+          <select id="pf-grade">
+            <option value="">未設定</option>
+            <option>1年</option>
+            <option>2年</option>
+            <option>3年</option>
+            <option>4年</option>
+            <option>修士</option>
+            <option>博士</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label>自己紹介</label>
+          <textarea id="pf-bio" rows="3" placeholder="一言お願いします"></textarea>
+        </div>
+        <div class="field">
+          <label>
+            <input type="checkbox" id="pf-terms" /> 利用規約に同意
+          </label>
+        </div>
+      </div>
+      <footer>
+        <button class="btn btn-ghost" value="cancel">閉じる</button>
+        <button id="btn-save-profile" class="btn btn-primary" value="save">保存</button>
+        <button id="btn-delete-account" class="btn danger" value="delete">アカウント削除</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- 出品モーダル -->
+  <dialog id="dlg-new" class="modal">
+    <form method="dialog" class="modal-card" id="new-form">
+      <header>
+        <h3>商品を出品</h3>
+      </header>
+      <div class="body">
+        <div class="grid-2">
+          <div class="field">
+            <label>カテゴリ</label>
+            <select id="item-category" required>
+              <option value="textbook">教科書</option>
+              <option value="daily">日用品</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>状態</label>
+            <select id="item-condition" required>
+              <option value="new">新品に近い</option>
+              <option value="good">良い</option>
+              <option value="fair">可</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>タイトル</label>
+          <input id="item-title" type="text" required />
+        </div>
+        <div class="field">
+          <label>説明</label>
+          <textarea id="item-desc" rows="3"></textarea>
+        </div>
+        <div class="grid-3">
+          <div class="field">
+            <label>価格 (円)</label>
+            <input id="item-price" type="number" min="0" step="1" required />
+          </div>
+          <div class="field">
+            <label>出品期限</label>
+            <input id="item-expire" type="date" />
+          </div>
+          <div class="field">
+            <label>大学（任意）</label>
+            <input id="item-university" type="text" placeholder="大学での受け渡し用" />
+          </div>
+        </div>
+
+        <!-- 教科書特化フィールド -->
+        <fieldset id="textbook-fields" class="fieldset">
+          <legend>教科書情報（カテゴリが教科書のとき）</legend>
+          <div class="grid-3">
+            <div class="field">
+              <label>ISBN</label>
+              <input id="tb-isbn" type="text" placeholder="978-..." />
+            </div>
+            <div class="field">
+              <label>版数</label>
+              <input id="tb-edition" type="text" placeholder="第◯版" />
+            </div>
+            <div class="field">
+              <label>発行年</label>
+              <input id="tb-year" type="number" placeholder="2024" />
+            </div>
+          </div>
+          <div class="grid-3">
+            <div class="field">
+              <label>教授名</label>
+              <input id="tb-prof" type="text" placeholder="教授名（曖昧検索対応）" />
+            </div>
+            <div class="field">
+              <label>科目名</label>
+              <input id="tb-course" type="text" placeholder="ミクロ経済学" />
+            </div>
+            <div class="field">
+              <label>必須/推奨</label>
+              <select id="tb-required">
+                <option value="">未指定</option>
+                <option value="required">必須</option>
+                <option value="recommended">推奨</option>
+              </select>
+            </div>
+          </div>
+        </fieldset>
+
+        <div class="field">
+          <label>写真（複数可・最大4枚）</label>
+          <input id="item-images" type="file" accept="image/*" multiple />
+          <div id="image-preview" class="image-preview"></div>
+        </div>
+
+        <fieldset class="fieldset">
+          <legend>受け渡し・決済</legend>
+          <div class="grid-3">
+            <div class="field">
+              <label>受け渡し方法</label>
+              <select id="item-delivery">
+                <option value="meet">対面（大学内）</option>
+                <option value="post">郵送/宅配</option>
+                <option value="conbini">コンビニ受取</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>決済</label>
+              <select id="item-payment">
+                <option value="cash">現金</option>
+                <option value="emoney">電子マネー</option>
+                <option value="bank">銀行振込</option>
+                <option value="card" disabled>クレジット（将来）</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>在庫/状態</label>
+              <select id="item-status">
+                <option value="available">出品中</option>
+                <option value="pending">取引中</option>
+                <option value="sold">販売済</option>
+              </select>
+            </div>
+          </div>
+        </fieldset>
+      </div>
+      <footer>
+        <button class="btn btn-ghost" value="cancel">閉じる</button>
+        <button id="btn-save-item" class="btn btn-primary" value="save">保存</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- 商品詳細ダイアログ -->
+  <dialog id="dlg-detail" class="modal">
+    <div class="modal-card">
+      <header>
+        <h3 id="detail-title">商品詳細</h3>
+      </header>
+      <div class="body">
+        <div class="detail">
+          <div class="detail-gallery" id="detail-gallery"></div>
+          <div class="detail-info">
+            <div id="detail-meta"></div>
+            <div class="detail-actions">
+              <button id="btn-detail-fav" class="btn">★ お気に入り</button>
+              <button id="btn-detail-watch" class="btn">👁 ウォッチ</button>
+              <button id="btn-start-chat" class="btn">💬 メッセージ</button>
+              <button id="btn-buy" class="btn btn-primary">購入リクエスト</button>
+              <button id="btn-edit-item" class="btn btn-ghost">編集</button>
+              <button id="btn-delete-item" class="btn danger">削除</button>
+            </div>
+            <div class="security-actions">
+              <button id="btn-report-item" class="link">不適切商品を報告</button>
+            </div>
+          </div>
+        </div>
+
+        <section class="specs" id="detail-specs"></section>
+      </div>
+      <footer>
+        <button class="btn" id="btn-close-detail">閉じる</button>
+      </footer>
+    </div>
+  </dialog>
+
+  <template id="tpl-card">
+    <article class="card item-card">
+      <div class="thumb"></div>
+      <div class="item-body">
+        <h3 class="title"></h3>
+        <div class="price"></div>
+        <div class="meta"></div>
+        <div class="actions">
+          <button class="btn btn-ghost btn-sm act-view">詳細</button>
+          <button class="btn btn-sm act-fav">★</button>
+          <button class="btn btn-sm act-watch">👁</button>
+        </div>
+      </div>
+    </article>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
